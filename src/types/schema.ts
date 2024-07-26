@@ -21,3 +21,10 @@ export const SignUpSchema = z
     message: "Password don't match",
     path: ["confirmPassword"],
   });
+
+export const workspaceFormSchema = z.object({
+  workspaceLogo: z.any(),
+  workspaceName: z
+    .string()
+    .min(5, { message: "Workspace name must be greater than 5 characters" }),
+});
