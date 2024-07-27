@@ -28,7 +28,7 @@ const DashboardSetup = ({ subscription, user }: Props) => {
     selectedEmoji,
     setSelectedEmoji,
     onSubmit,
-  } = useWorkspace();
+  } = useWorkspace({ user: user! });
   return (
     <Card className="w-[800px] h-screen sm:h-auto">
       <CardHeader>

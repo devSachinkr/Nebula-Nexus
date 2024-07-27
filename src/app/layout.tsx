@@ -5,6 +5,7 @@ import db from "@/lib/supabase/db";
 import { ThemeProvider } from "@/lib/providers/theme-provider";
 import { twMerge } from "tailwind-merge";
 import { Toaster } from "@/components/ui/sonner";
+import AppStateProvider from "@/lib/providers/state-provider";
 const inter = DM_Sans({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -17,6 +18,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  console.log(db);
   return (
     <html lang="en">
       <body className={twMerge("bg-background", inter.className)}>
@@ -26,7 +28,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <AppStateProvider>{children}</AppStateProvider>
           <Toaster />
         </ThemeProvider>
       </body>
