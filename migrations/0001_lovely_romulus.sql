@@ -1,3 +1,9 @@
+CREATE TABLE IF NOT EXISTS "collaborators" (
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"workspace_id" uuid NOT NULL,
+	"user_id" uuid NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "subscriptions" (
 	"id" text PRIMARY KEY NOT NULL,
 	"user_id" uuid NOT NULL,
@@ -15,6 +21,18 @@ CREATE TABLE IF NOT EXISTS "subscriptions" (
 	"trial_start" timestamp with time zone DEFAULT now(),
 	"trial_end" timestamp with time zone DEFAULT now()
 );
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "collaborators" ADD CONSTRAINT "collaborators_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "collaborators" ADD CONSTRAINT "collaborators_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
 --> statement-breakpoint
 DO $$ BEGIN
  ALTER TABLE "subscriptions" ADD CONSTRAINT "subscriptions_price_id_prices_id_fk" FOREIGN KEY ("price_id") REFERENCES "public"."prices"("id") ON DELETE no action ON UPDATE no action;

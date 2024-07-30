@@ -2,8 +2,8 @@
 
 import db from "@/lib/supabase/db";
 import { WORKSPACE } from "@/types/supabase";
-import { collaborators, users, workspaces } from "../../migrations/schema";
 import { and, eq, notExists } from "drizzle-orm";
+import { collaborators, users, workspaces } from "../../migrations/schema";
 
 export const createWorkspace = async (workspace: WORKSPACE) => {
   try {
@@ -12,7 +12,7 @@ export const createWorkspace = async (workspace: WORKSPACE) => {
   } catch (error) {
     console.log(error);
     return { data: null, error: `Error ${error}` };
-  }
+}
 };
 
 export const getPrivateWorkspaces = async (userId: string) => {
@@ -42,7 +42,7 @@ export const getPrivateWorkspaces = async (userId: string) => {
         eq(workspaces.workspaceOwner, userId)
       )
     )) as [WORKSPACE];
-     console.log("server",res)
+  console.log("server", res);
   return res;
 };
 

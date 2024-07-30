@@ -6,6 +6,9 @@ import { ThemeProvider } from "@/lib/providers/theme-provider";
 import { twMerge } from "tailwind-merge";
 import { Toaster } from "@/components/ui/sonner";
 import AppStateProvider from "@/lib/providers/state-provider";
+import { ModalProvider } from "@/lib/providers/modal-provider";
+import { SupabaseUserProvider } from "@/lib/providers/user-provider";
+
 const inter = DM_Sans({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -28,8 +31,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AppStateProvider>{children}</AppStateProvider>
-          <Toaster />
+          <SupabaseUserProvider>
+            <ModalProvider>
+              <AppStateProvider>{children}</AppStateProvider>
+              <Toaster />
+            </ModalProvider>
+          </SupabaseUserProvider>
         </ThemeProvider>
       </body>
     </html>

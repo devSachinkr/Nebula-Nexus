@@ -19,7 +19,7 @@ const Dashboard = async () => {
       <div className="bg-background h-screen w-screen flex justify-center items-center">
         <DashboardSetup
           user={user}
-          subscription={subscription?.[0] as SUBSCRIPTIONS | null}
+          subscription={subscription as SUBSCRIPTIONS | null}
         ></DashboardSetup>
       </div>
     );

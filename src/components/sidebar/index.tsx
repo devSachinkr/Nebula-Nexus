@@ -5,20 +5,24 @@ import { twMerge } from "tailwind-merge";
 import WorkspaceDropdown from "./workspace-dropdown";
 import { AuthUser } from "@supabase/supabase-js";
 import db from "@/lib/supabase/db";
+import Loader from "../global/loader";
 type Props = {
   workspaceId: string;
   className?: string;
   user: AuthUser;
 };
 
-const Sidebar = ({ workspaceId, className,user }: Props) => {
+const Sidebar = ({ workspaceId, className, user }: Props) => {
   const {
     collaboratorsWorkspacesData,
     foldersData,
     privateWorkSpacesData,
     sharedWorkplacesData,
     userSubscriptionData,
+    loading,
   } = useSidebar({ workspaceId, user });
+
+  if (loading) return <Loader />;
   return (
     <aside
       className={twMerge(

@@ -22,7 +22,24 @@ export const getUserSubscription = async (userId: string) => {
     const { data, error } = await supabase
       .from("subscriptions")
       .select("*")
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .single();
+    if (data) return { data: data, error: error };
+    else return { data: null, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: null, error: `Error ${error}` };
+  }
+};
+
+export const getUserByEmail = async (email: string) => {
+  if (!email) return { data: null, error: "Email not found" };
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("users")
+      .select("*")
+      .ilike("email", `${email}%`);
     if (data) return { data: data, error: error };
     else return { data: null, error: null };
   } catch (error) {

@@ -5,21 +5,23 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import Typography from "../global/typography";
+import Loader from "../global/loader";
 
 type Props = {
   workspace: WORKSPACE;
-  onClick?: () => void;
+  select?: (opt: WORKSPACE) => void;
 };
 
-const CurrentWorkspace = ({ onClick, workspace }: Props) => {
-    console.log(workspace)
+const CurrentWorkspace = ({ select, workspace }: Props) => {
   const { workspaceLogo } = useCurrentWorkspace({ workspace });
   return (
     <Link
-      href={`dashboard/${workspace.id}`}
-      onClick={onClick}
+      href={`/dashboard/${workspace.id}`}
+      onClick={() => {
+        if (select) select(workspace);
+      }}
       className={
-        "flex rounded-md hover:bg-muted transition-all flex-row p-2 gap-4 justify-center cursor-pointer items-center my-2 "
+        "flex rounded-md hover:bg-muted transition-all flex-row p-2 pl-4 gap-3 justify-center cursor-pointer items-center my-2 "
       }
     >
       <Image

@@ -7,31 +7,36 @@ import {
   getSharedWorkspaces,
 } from "@/actions/workspace";
 import { useAppState } from "@/lib/providers/state-provider";
-import { FOLDER, WORKSPACE } from "@/types/supabase";
+import { FOLDER, USER, WORKSPACE } from "@/types/supabase";
 import { AuthUser } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/supabase-client";
 import Nebula from "../../../public/nebula.png";
 
-export const useSidebar = ({ workspaceId,user }: { workspaceId: string,user:AuthUser }) => {
-  
+export const useSidebar = ({
+  workspaceId,
+  user,
+}: {
+  workspaceId?: string;
+  user: AuthUser | null;
+}) => {
   const router = useRouter();
-  
+
   const [userSubscriptionData, setUserSubscriptionData] = useState<any>(null);
   const [foldersData, setFoldersData] = useState<FOLDER[]>([]);
   const [privateWorkSpacesData, setPrivateWorkSpacesData] = useState<
     WORKSPACE[]
   >([]);
+  const [loading, setLoading] = useState(false);
   const [collaboratorsWorkspacesData, setCollaboratorsWorkspacesData] =
-  useState<WORKSPACE[]>([]);
-  
+    useState<WORKSPACE[]>([]);
+
   const [sharedWorkplacesData, setSharedWorkplacesData] = useState<WORKSPACE[]>(
     []
   );
-  console.log("user",user, "subs :" ,userSubscriptionData,"private",privateWorkSpacesData,"collab",collaboratorsWorkspacesData,"shared",sharedWorkplacesData)
-  const fetchUser = async () => {
 
+  const fetchUser = async () => {
     const { data, error } = await getUserSubscription(user?.id!);
     if (error) {
       router.push("/dashboard");
@@ -40,6 +45,7 @@ export const useSidebar = ({ workspaceId,user }: { workspaceId: string,user:Auth
   };
 
   const fetchFolders = async () => {
+    if (!workspaceId) return;
     const { data, error } = await getFolders(workspaceId);
     if (error) {
       router.push("/dashboard");
@@ -48,7 +54,7 @@ export const useSidebar = ({ workspaceId,user }: { workspaceId: string,user:Auth
   };
 
   const fetchWorkspacesData = async () => {
-    console.log(user)
+    setLoading(true);
     if (!user) return;
 
     const [privateWorkSpaces, collaboratorsWorkspaces, sharedWorkplaces] =
@@ -62,6 +68,7 @@ export const useSidebar = ({ workspaceId,user }: { workspaceId: string,user:Auth
     if (collaboratorsWorkspaces.length)
       setCollaboratorsWorkspacesData(collaboratorsWorkspaces);
     if (sharedWorkplaces.length) setSharedWorkplacesData(sharedWorkplaces);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -72,8 +79,8 @@ export const useSidebar = ({ workspaceId,user }: { workspaceId: string,user:Auth
     fetchFolders();
   }, []);
   useEffect(() => {
-   fetchWorkspacesData();
-  }, []);
+    fetchWorkspacesData();
+  }, [ ]);
 
   return {
     user,
@@ -82,6 +89,8 @@ export const useSidebar = ({ workspaceId,user }: { workspaceId: string,user:Auth
     collaboratorsWorkspacesData,
     sharedWorkplacesData,
     userSubscriptionData,
+    loading,
+    fetchWorkspacesData,
   };
 };
 
@@ -97,7 +106,10 @@ export const useSidebarDropdown = ({
   collaboratingWorkspaces: WORKSPACE[] | [];
 }) => {
   const { dispatch, state } = useAppState();
-  const [selectedOption, setSelectedOption] = useState<WORKSPACE>();
+  const [selectedOption, setSelectedOption] = useState<WORKSPACE>(
+    defaultValues as WORKSPACE
+  );
+  const [loading, setLoading] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
   useEffect(() => {
@@ -120,12 +132,25 @@ export const useSidebarDropdown = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [collaboratingWorkspaces, privateWorkspaces, sharedWorkspaces]);
+  useEffect(() => {
+    setLoading(true);
+    defaultValues && setSelectedOption(defaultValues);
+    setLoading(false);
+  }, [defaultValues]);
 
   const handleSelect = (opt: WORKSPACE) => {
     setSelectedOption(opt);
     setIsOpen(false);
   };
-  return { isOpen, selectedOption, setSelectedOption, handleSelect };
+
+  return {
+    isOpen,
+    selectedOption,
+    setSelectedOption,
+    handleSelect,
+    setIsOpen,
+    loading,
+  };
 };
 
 export const useCurrentWorkspace = ({

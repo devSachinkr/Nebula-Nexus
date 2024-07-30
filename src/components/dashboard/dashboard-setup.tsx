@@ -12,7 +12,6 @@ import { SUBSCRIPTIONS } from "@/types/supabase";
 import Emoji from "../global/emoji-picker";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
-import { FieldValues, useForm } from "react-hook-form";
 import { useWorkspace } from "@/hooks/workspace";
 import { Button } from "../ui/button";
 import Loader from "../global/loader";

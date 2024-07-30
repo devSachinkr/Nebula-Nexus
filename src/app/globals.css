@@ -135,7 +135,7 @@ ul {
 .loader {    
   --r1: 154%;
   --r2: 68.5%;
-  width: 60px;
+  width: 30px;
   aspect-ratio: 1;
   border-radius: 50%; 
   background:

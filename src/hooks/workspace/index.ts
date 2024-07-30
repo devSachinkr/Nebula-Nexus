@@ -6,12 +6,17 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { v4 } from "uuid";
 import { workspaceFormSchema } from "@/types/schema";
-import { WORKSPACE } from "@/types/supabase";
+import { USER, WORKSPACE } from "@/types/supabase";
 import ToastNotify from "@/components/global/ToastNotify";
-import { createWorkspace } from "@/actions/workspace";
+import { createWorkspace, getPrivateWorkspaces } from "@/actions/workspace";
 import { AuthUser } from "@supabase/supabase-js";
 import { useAppState } from "@/lib/providers/state-provider";
 import { createClient } from "@/lib/supabase/supabase-client";
+import { useSupabaseUser } from "@/lib/providers/user-provider";
+import { addCollaborators } from "@/actions/collaborators";
+import { useModal } from "@/lib/providers/modal-provider";
+import { useSidebar } from "../sidebar";
+
 export const useWorkspace = ({ user }: { user: AuthUser }) => {
   const [selectedEmoji, setSelectedEmoji] = useState("🏡");
   console.log(selectedEmoji);
@@ -100,5 +105,72 @@ export const useWorkspace = ({ user }: { user: AuthUser }) => {
     isSubmitting,
     errors,
     onSubmit,
+  };
+};
+
+export const useWorkspaceForm = ({
+  defaultValue,
+}: {
+  defaultValue: WORKSPACE | undefined;
+}) => {
+  const { user } = useSupabaseUser();
+  const { setClose } = useModal();
+  const { fetchWorkspacesData } = useSidebar({ user });
+  const [permission, setPermission] = useState<"private" | "shared">("private");
+  const [title, setTitle] = useState("");
+  const [collaborators, setCollaborators] = useState<USER[]>([]);
+  const [loading, SetLoading] = useState<boolean>(false);
+  const router = useRouter();
+  const addCollaborator = (user: USER) => {
+    setCollaborators([...collaborators, user]);
+  };
+  const removeCollaborator = (user: USER) => {
+    setCollaborators(collaborators.filter((c) => c.id !== user.id));
+  };
+  const handleSubmit = async () => {
+    SetLoading(true);
+    if (user?.id) {
+      const payload: WORKSPACE = {
+        id: v4(),
+        data: null,
+        iconId: "🏡",
+        inTrash: "",
+        workspaceOwner: user.id,
+        title,
+        logo: null,
+        bannerUrl: "",
+        createdAt: new Date().toISOString(),
+      };
+      if (permission === "private") {
+        await createWorkspace(payload);
+        router.refresh();
+      }
+      if (permission === "shared") {
+        await createWorkspace(payload);
+        await addCollaborators(collaborators, payload.id);
+        router.refresh();
+      }
+    }
+    fetchWorkspacesData();
+    SetLoading(false);
+    ToastNotify({
+      title: "Success",
+      msg: "Workspace created successfully",
+    });
+
+    setClose();
+    router.refresh();
+  };
+  return {
+    permission,
+    setPermission,
+    title,
+    collaborators,
+    user,
+    addCollaborator,
+    removeCollaborator,
+    setTitle,
+    handleSubmit,
+    loading,
   };
 };
