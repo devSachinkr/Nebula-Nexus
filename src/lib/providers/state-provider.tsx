@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, {
   Dispatch,
@@ -7,10 +7,10 @@ import React, {
   useEffect,
   useMemo,
   useReducer,
-} from 'react';
+} from "react";
 
-import { FILES, FOLDER, WORKSPACE } from '@/types/supabase';
-import { usePathname } from 'next/navigation';
+import { FILES, FOLDER, WORKSPACE } from "@/types/supabase";
+import { usePathname } from "next/navigation";
 
 export type appFoldersType = FOLDER & { files: File[] | [] };
 export type appWorkspacesType = WORKSPACE & {
@@ -22,19 +22,32 @@ interface AppState {
 }
 
 type Action =
-  | { type: 'ADD_WORKSPACE'; payload: appWorkspacesType }
-  | { type: 'DELETE_WORKSPACE'; payload: string }
+  | { type: "ADD_WORKSPACE"; payload: appWorkspacesType }
+  | { type: "DELETE_WORKSPACE"; payload: string }
   | {
-      type: 'UPDATE_WORKSPACE';
+      type: "UPDATE_WORKSPACE";
       payload: { workspace: Partial<appWorkspacesType>; workspaceId: string };
     }
-  |{
-    type:"SET_WORKSPACES";
-    payload:{
-      workspaces: appWorkspacesType[] | [];
+  | {
+      type: "SET_WORKSPACES";
+      payload: {
+        workspaces: appWorkspacesType[] | [];
+      };
     }
-  }
-  
+  | {
+      type: "SET_FOLDER";
+      payload: {
+        folders: [] | appFoldersType[];
+        workspaceId: string;
+      };
+    }
+  | {
+      type: "ADD_FOLDER";
+      payload: {
+        workspaceId: string;
+        folder: appFoldersType;
+      };
+    };
 
 const initialState: AppState = { workspaces: [] };
 
@@ -43,19 +56,19 @@ const appReducer = (
   action: Action
 ): AppState => {
   switch (action.type) {
-    case 'ADD_WORKSPACE':
+    case "ADD_WORKSPACE":
       return {
         ...state,
         workspaces: [...state.workspaces, action.payload],
       };
-    case 'DELETE_WORKSPACE':
+    case "DELETE_WORKSPACE":
       return {
         ...state,
         workspaces: state.workspaces.filter(
           (workspace) => workspace.id !== action.payload
         ),
       };
-    case 'UPDATE_WORKSPACE':
+    case "UPDATE_WORKSPACE":
       return {
         ...state,
         workspaces: state.workspaces.map((workspace) => {
@@ -68,10 +81,45 @@ const appReducer = (
           return workspace;
         }),
       };
-    case 'SET_WORKSPACES':
+    case "SET_WORKSPACES":
       return {
-       ...state,
+        ...state,
         workspaces: action.payload.workspaces,
+      };
+
+    case "SET_FOLDER":
+      return {
+        ...state,
+        workspaces: state.workspaces.map((workspace) => {
+          if (workspace.id === action.payload.workspaceId) {
+            return {
+              ...workspace,
+              folders: action.payload.folders.sort(
+                (a, b) =>
+                  new Date(a.createdAt).getTime() -
+                  new Date(b.createdAt).getTime()
+              ),
+            };
+          }
+          return workspace;
+        }),
+      };
+    case "ADD_FOLDER":
+      return {
+        ...state,
+        workspaces: state.workspaces.map((workspace) => {
+          if (workspace.id === action.payload.workspaceId) {
+            return {
+              ...workspace,
+              folders: [...workspace.folders, action.payload.folder].sort(
+                (a, b) =>
+                  new Date(a.createdAt).getTime() -
+                  new Date(b.createdAt).getTime()
+              ),
+            };
+          }
+          return workspace;
+        }),
       };
     default:
       return initialState;
@@ -98,7 +146,7 @@ const AppStateProvider: React.FC<AppStateProviderProps> = ({ children }) => {
   const pathname = usePathname();
 
   const workspaceId = useMemo(() => {
-    const urlSegments = pathname?.split('/').filter(Boolean);
+    const urlSegments = pathname?.split("/").filter(Boolean);
     if (urlSegments)
       if (urlSegments.length > 1) {
         return urlSegments[1];
@@ -106,7 +154,7 @@ const AppStateProvider: React.FC<AppStateProviderProps> = ({ children }) => {
   }, [pathname]);
 
   const folderId = useMemo(() => {
-    const urlSegments = pathname?.split('/').filter(Boolean);
+    const urlSegments = pathname?.split("/").filter(Boolean);
     if (urlSegments)
       if (urlSegments?.length > 2) {
         return urlSegments[2];
@@ -114,31 +162,31 @@ const AppStateProvider: React.FC<AppStateProviderProps> = ({ children }) => {
   }, [pathname]);
 
   const fileId = useMemo(() => {
-    const urlSegments = pathname?.split('/').filter(Boolean);
+    const urlSegments = pathname?.split("/").filter(Boolean);
     if (urlSegments)
       if (urlSegments?.length > 3) {
         return urlSegments[3];
       }
   }, [pathname]);
 
-//   useEffect(() => {
-//     if (!folderId || !workspaceId) return;
-//     const fetchFiles = async () => {
-//       const { error: filesError, data } = await getFiles(folderId);
-//       if (filesError) {
-//         console.log(filesError);
-//       }
-//       if (!data) return;
-//       dispatch({
-//         type: 'SET_FILES',
-//         payload: { workspaceId, files: data, folderId },
-//       });
-//     };
-//     fetchFiles();
-//   }, [folderId, workspaceId]);
+  //   useEffect(() => {
+  //     if (!folderId || !workspaceId) return;
+  //     const fetchFiles = async () => {
+  //       const { error: filesError, data } = await getFiles(folderId);
+  //       if (filesError) {
+  //         console.log(filesError);
+  //       }
+  //       if (!data) return;
+  //       dispatch({
+  //         type: 'SET_FILES',
+  //         payload: { workspaceId, files: data, folderId },
+  //       });
+  //     };
+  //     fetchFiles();
+  //   }, [folderId, workspaceId]);
 
   useEffect(() => {
-    console.log('App State Changed', state);
+    console.log("App State Changed", state);
   }, [state]);
 
   return (
@@ -155,7 +203,7 @@ export default AppStateProvider;
 export const useAppState = () => {
   const context = useContext(AppStateContext);
   if (!context) {
-    throw new Error('useAppState must be used within an AppStateProvider');
+    throw new Error("useAppState must be used within an AppStateProvider");
   }
   return context;
 };

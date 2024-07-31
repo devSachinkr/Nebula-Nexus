@@ -15,11 +15,9 @@ import { createClient } from "@/lib/supabase/supabase-client";
 import { useSupabaseUser } from "@/lib/providers/user-provider";
 import { addCollaborators } from "@/actions/collaborators";
 import { useModal } from "@/lib/providers/modal-provider";
-import { useSidebar } from "../sidebar";
 
 export const useWorkspace = ({ user }: { user: AuthUser }) => {
   const [selectedEmoji, setSelectedEmoji] = useState("🏡");
-  console.log(selectedEmoji);
   const { dispatch } = useAppState();
   const router = useRouter();
   const {
@@ -115,7 +113,6 @@ export const useWorkspaceForm = ({
 }) => {
   const { user } = useSupabaseUser();
   const { setClose } = useModal();
-  const { fetchWorkspacesData } = useSidebar({ user });
   const [permission, setPermission] = useState<"private" | "shared">("private");
   const [title, setTitle] = useState("");
   const [collaborators, setCollaborators] = useState<USER[]>([]);
@@ -151,7 +148,6 @@ export const useWorkspaceForm = ({
         router.refresh();
       }
     }
-    fetchWorkspacesData();
     SetLoading(false);
     ToastNotify({
       title: "Success",

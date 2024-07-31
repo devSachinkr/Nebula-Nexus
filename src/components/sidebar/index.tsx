@@ -6,6 +6,10 @@ import WorkspaceDropdown from "./workspace-dropdown";
 import { AuthUser } from "@supabase/supabase-js";
 import db from "@/lib/supabase/db";
 import Loader from "../global/loader";
+import Plan from "../plan";
+import Navigation from "./navigation";
+import { ScrollArea } from "../ui/scroll-area";
+import FolderList from "./folder-list";
 type Props = {
   workspaceId: string;
   className?: string;
@@ -40,7 +44,17 @@ const Sidebar = ({ workspaceId, className, user }: Props) => {
             ...sharedWorkplacesData,
             ...collaboratorsWorkspacesData,
           ].find((w) => w.id === workspaceId)}
-        ></WorkspaceDropdown>
+        />
+        <Plan
+          folderLength={foldersData.length || 0}
+          subscription={userSubscriptionData}
+        />
+        <Navigation className="" workspaceId={workspaceId} />
+        <ScrollArea className=" h-[450px] overflow-x-hidden  relative">
+          <div className="pointer-evegts-none w-full  bottom-0 h-20 bg-gradient-to-t from-background to-transparent">
+            <FolderList workspaceFolder={foldersData} workspaceId={workspaceId} />
+          </div>
+        </ScrollArea>
       </div>
     </aside>
   );
