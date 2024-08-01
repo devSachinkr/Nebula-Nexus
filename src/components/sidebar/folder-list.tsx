@@ -6,6 +6,7 @@ import { Accordion } from "../ui/accordion";
 import { useFolder } from "@/hooks/folder";
 import Tooltip from "../global/tool-tip";
 import DropDown from "./drop-down";
+import { DropDownProvider } from "@/lib/providers/drop-down-provide";
 
 type Props = {
   workspaceFolder: FOLDER[] | null;
@@ -60,13 +61,20 @@ const FolderList = ({ workspaceFolder, workspaceId }: Props) => {
         {folders
           ?.filter((folder) => !folder.inTrash)
           .map((folder) => (
-            <DropDown
-              key={folder.id}
+            <DropDownProvider
+              listType={"folder"}
+              folderId={folder.id}
               title={folder.title}
-              listType="folder"
-              id={folder.id}
-              iconId={folder.iconId}
-            />
+              key={folder.id}
+            >
+              <DropDown
+                key={folder.id}
+                title={folder.title}
+                listType="folder"
+                id={folder.id}
+                iconId={folder.iconId}
+              />
+            </DropDownProvider>
           ))}
       </Accordion>
     </>

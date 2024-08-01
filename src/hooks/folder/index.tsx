@@ -1,6 +1,6 @@
 "use client";
 
-import { createFolder } from "@/actions/folder";
+import { upsertFolder } from "@/actions/folder";
 import ToastNotify from "@/components/global/ToastNotify";
 import { useAppState } from "@/lib/providers/state-provider";
 import { useSupabaseUser } from "@/lib/providers/user-provider";
@@ -69,7 +69,7 @@ export const useFolder = ({
       payload: { workspaceId, folder: { ...payload, files: [] } },
     });
 
-    const { error } = await createFolder(payload);
+    const { error } = await upsertFolder(payload);
 
     if (error) {
       console.log(error);

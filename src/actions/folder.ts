@@ -26,19 +26,23 @@ export const getFolders = async (workspaceId: string) => {
   }
 };
 
-export const createFolder = async (folder: FOLDER) => {
+export const upsertFolder = async (folder: Partial<FOLDER>) => {
   try {
     const supabase = await createClient();
-    const { data, error } = await supabase.from("folders").insert({
-      banner_url: folder.bannerUrl,
-      created_at: folder.createdAt,
-      icon_id: folder.iconId,
-      workspace_id: folder.workspaceId,
-      in_trash: folder.inTrash,
-      title: folder.title,
-      id: folder.id,
-      data: folder.data,
-    });
+    const { data, error } = await supabase
+      .from("folders")
+      .upsert([
+        {
+          banner_url: folder.bannerUrl,
+          created_at: folder.createdAt,
+          icon_id: folder.iconId,
+          workspace_id: folder.workspaceId,
+          in_trash: folder.inTrash,
+          title: folder.title,
+          id: folder.id,
+          data: folder.data,
+        }
+      ]);
 
     if (error) return { data: null, error };
     return { data, error: null };

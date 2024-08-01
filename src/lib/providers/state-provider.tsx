@@ -47,6 +47,14 @@ type Action =
         workspaceId: string;
         folder: appFoldersType;
       };
+    }
+  | {
+      type: "UPDATE_FOLDER";
+      payload: {
+        workspaceId: string;
+        folder:Partial<appFoldersType>;
+        folderId: string;
+      };
     };
 
 const initialState: AppState = { workspaces: [] };
@@ -116,6 +124,27 @@ const appReducer = (
                   new Date(a.createdAt).getTime() -
                   new Date(b.createdAt).getTime()
               ),
+            };
+          }
+          return workspace;
+        }),
+      };
+    case "UPDATE_FOLDER":
+      return {
+        ...state,
+        workspaces: state.workspaces.map((workspace) => {
+          if (workspace.id === action.payload.workspaceId) {
+            return {
+              ...workspace,
+              folders: workspace.folders.map((folder) => {
+                if (folder.id === action.payload.folderId) {
+                  return {
+                    ...folder,
+                    ...action.payload.folder,
+                  };
+                }
+                return folder;
+              }),
             };
           }
           return workspace;

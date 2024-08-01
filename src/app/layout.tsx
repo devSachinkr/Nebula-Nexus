@@ -8,6 +8,8 @@ import { Toaster } from "@/components/ui/sonner";
 import AppStateProvider from "@/lib/providers/state-provider";
 import { ModalProvider } from "@/lib/providers/modal-provider";
 import { SupabaseUserProvider } from "@/lib/providers/user-provider";
+import { DropDownProvider } from "@/lib/providers/drop-down-provide";
+import RootProvider from "@/lib/providers/root-provider";
 
 const inter = DM_Sans({ subsets: ["latin"] });
 
@@ -31,12 +33,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SupabaseUserProvider>
-            <ModalProvider>
-              <AppStateProvider>{children}</AppStateProvider>
-              <Toaster />
-            </ModalProvider>
-          </SupabaseUserProvider>
+          <RootProvider>
+            {children}
+            <Toaster />
+          </RootProvider>
         </ThemeProvider>
       </body>
     </html>
