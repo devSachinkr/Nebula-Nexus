@@ -1,12 +1,17 @@
 "use client";
 
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/supabase-client";
 import { useAppState } from "./state-provider";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
 import { upsertFolder } from "@/actions/folder";
 import ToastNotify from "@/components/global/ToastNotify";
+import { FILES } from "@/types/supabase";
+import { v4 } from "uuid";
+import { SUPABASE_FILE } from "@/types/supabase-type";
+import { getFiles, upsertFile } from "@/actions/file";
+import { useSupabaseUser } from "./user-provider";
 type DropdownContext = {
   style: string;
   navigatePage: (id: string, listType: DropdownProvider["listType"]) => void;
@@ -18,6 +23,10 @@ type DropdownContext = {
   handleDoubleClick: () => void;
   handleBlur: () => void;
   folderTitleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  fileTitle: string | undefined;
+  fileTitleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  addFile: () => void;
+  moveTrash: () => void;
 };
 type DropdownProvider = {
   children: React.ReactNode;
@@ -36,22 +45,24 @@ const initialValue: DropdownContext = {
   handleDoubleClick: () => {},
   handleBlur: () => {},
   folderTitleChange: () => {},
+  fileTitle: "",
+  fileTitleChange: () => {},
+  addFile: () => {},
+  moveTrash: () => {},
 };
 const DropdownContext = createContext<DropdownContext>(initialValue);
-
 export const DropDownProvider: React.FC<DropdownProvider> = ({
   children,
   listType,
   title,
   folderId,
 }) => {
-  const supabase = createClient();
-  const { dispatch, state } = useAppState();
+  const { dispatch, state, workspaceId } = useAppState();
+  const { user } = useSupabaseUser();
   const [editing, setEditing] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
 
   const router = useRouter();
-  const { workspaceId } = useAppState();
   //   Custom styles
   const isFolder = listType === "folder";
   const style = useMemo(
@@ -144,7 +155,7 @@ export const DropDownProvider: React.FC<DropdownProvider> = ({
       const stateTitle = state.workspaces
         .find((workspace) => workspace.id === workspaceId)
         ?.folders.find((folder) => folder.id === fileAndFolderId[0])
-        ?.files.find((file) => file.id === fileAndFolderId[1])?.title;
+        ?.files.find((file) => file?.id === fileAndFolderId[1])?.title;
       if (title === stateTitle || !stateTitle) return title;
       return stateTitle;
     }
@@ -156,8 +167,12 @@ export const DropDownProvider: React.FC<DropdownProvider> = ({
   };
   // handle blur
   const handleBlur = async () => {
+    if (listType === "folder") {
+      if (!editing) return;
+    }
     setEditing(false);
     const fId = folderId.split("folder");
+
     if (fId.length === 1) {
       if (!folderTitle) return;
       const { error } = await upsertFolder({
@@ -184,13 +199,33 @@ export const DropDownProvider: React.FC<DropdownProvider> = ({
     }
     if (fId.length === 2 && fId[1]) {
       if (!fileTitle) return;
-      //   await upsertFile({});
+      const { error } = await upsertFile({
+        created_at: new Date().toISOString(),
+        id: fId[1],
+        workspace_id: workspaceId!,
+        title: title,
+        folder_id: fId[0],
+      });
+      if (error) {
+        console.log(error);
+        ToastNotify({
+          title: "Oops!",
+          msg: `Failed to update file title. Error`,
+        });
+        return;
+      }
+      ToastNotify({
+        title: "Success",
+        msg: `File title was updated ${title}`,
+      });
     }
   };
   //   change Folder Title
 
   const folderTitleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
+    if (title === e.target.value) {
+      return;
+    }
     const fId = folderId.split("folder");
     if (fId.length === 1) {
       if (!workspaceId) return;
@@ -207,12 +242,127 @@ export const DropDownProvider: React.FC<DropdownProvider> = ({
     }
   };
   //   change File Title
-
   const fileTitleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fId = folderId.split("folder");
+
     if (fId.length === 2 && fId[1]) {
-      if (!workspaceId) return;
-      //   dispatch({});
+      if (!workspaceId || !folderId) return;
+      dispatch({
+        type: "UPDATE_FILE",
+        payload: {
+          workspaceId,
+          folderId: fId[0],
+          file: {
+            title: e.target.value,
+          },
+          fileId: fId[1],
+        },
+      });
+    }
+  };
+
+  // Add new File
+  const addFile = async () => {
+    if (!workspaceId || !folderId)
+      throw new Error("Workspace ID or folder ID might not be specified!");
+
+    const payload: SUPABASE_FILE = {
+      banner_url: "",
+      created_at: new Date().toISOString(),
+      data: null,
+      folder_id: folderId,
+      workspace_id: workspaceId,
+      in_trash: null,
+      id: v4(),
+      icon_id: "📄",
+      title: "Untitled",
+    };
+    dispatch({
+      type: "ADD_FILE",
+      payload: { file: payload, workspaceId, folderId },
+    });
+
+    const { error } = await upsertFile(payload);
+    if (error) {
+      console.log(error);
+      ToastNotify({
+        title: "Oops!",
+        msg: `Failed to add file. Error: ${error}`,
+      });
+      return;
+    }
+    ToastNotify({
+      title: "Success",
+      msg: `File added successfully! ${payload.title}`,
+    });
+    router.refresh();
+  };
+  //  Move Trash
+  const moveTrash = async () => {
+    if (!user || !workspaceId) return;
+    const id = folderId.split("folder");
+    if (listType === "folder") {
+      dispatch({
+        type: "UPDATE_FOLDER",
+        payload: {
+          workspaceId,
+          folderId: id[0],
+          folder: {
+            inTrash: `Folder Deleted By ${user.email}`,
+          },
+        },
+      });
+      const { error } = await upsertFolder({
+        ...state.workspaces
+          .find((w) => w.id === workspaceId)
+          ?.folders.find((f) => f.id === id[0]),
+        inTrash: `Deleted By ${user.email}`,
+      });
+      if (error) {
+        console.log(error);
+        ToastNotify({
+          title: "Oops!",
+          msg: `Failed Folder couldn't move to trash. Error: ${error}`,
+        });
+        return;
+      }
+      ToastNotify({
+        title: "Success",
+        msg: `Folder moved to trash! `,
+      });
+      router.refresh();
+    } else if (listType === "file") {
+      dispatch({
+        type: "UPDATE_FILE",
+        payload: {
+          workspaceId,
+          folderId: id[0],
+          file: {
+            in_trash: `Deleted By ${user.email}`,
+          },
+          fileId: id[1],
+        },
+      });
+      const { error } = await upsertFile({
+        ...state.workspaces
+          .find((w) => w.id === workspaceId)
+          ?.folders.find((f) => f.id === id[0])
+          ?.files.find((file) => file.id === id[1]),
+        in_trash: `Deleted By ${user.email}`,
+      });
+      if (error) {
+        console.log(error);
+        ToastNotify({
+          title: "Oops!",
+          msg: `Failed File couldn't move to trash. Error: ${error}`,
+        });
+        return;
+      }
+      ToastNotify({
+        title: "Success",
+        msg: `File moved to trash! `,
+      });
+      router.refresh();
     }
   };
   // return value
@@ -227,6 +377,10 @@ export const DropDownProvider: React.FC<DropdownProvider> = ({
     handleDoubleClick,
     handleBlur,
     folderTitleChange,
+    fileTitle,
+    fileTitleChange,
+    addFile,
+    moveTrash,
   };
   return (
     <DropdownContext.Provider value={value}>

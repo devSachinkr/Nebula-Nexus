@@ -80,7 +80,7 @@ export const useSidebar = ({
   }, []);
   useEffect(() => {
     fetchWorkspacesData();
-  }, [ ]);
+  }, []);
 
   return {
     user,
@@ -132,6 +132,14 @@ export const useSidebarDropdown = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [collaboratingWorkspaces, privateWorkspaces, sharedWorkspaces]);
+  useEffect(() => {
+    const updatedWorkspace = state.workspaces.find(
+      (w) => w.id === defaultValues?.id
+    );
+    if (updatedWorkspace) {
+      setSelectedOption(updatedWorkspace);
+    }
+  }, [state, defaultValues]);
   useEffect(() => {
     setLoading(true);
     defaultValues && setSelectedOption(defaultValues);

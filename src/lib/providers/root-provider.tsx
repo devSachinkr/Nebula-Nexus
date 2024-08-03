@@ -7,11 +7,9 @@ import { ModalProvider } from "./modal-provider";
 const RootProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <SupabaseUserProvider>
-      <ModalProvider>
-        <AppStateProvider>
-         {children}
-        </AppStateProvider>
-      </ModalProvider>
+      <AppStateProvider>
+        <ModalProvider>{children}</ModalProvider>
+      </AppStateProvider>
     </SupabaseUserProvider>
   );
 };

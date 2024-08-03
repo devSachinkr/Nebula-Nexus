@@ -5,6 +5,8 @@ import Link from "next/link";
 import React from "react";
 import { twMerge } from "tailwind-merge";
 import CustomModal from "../global/custom-modal";
+import WorkspaceForm from "../forms/workspace";
+import SettingsForm from "../forms/settings";
 
 type Props = {
   workspaceId: string;
@@ -42,7 +44,7 @@ const Navigation = ({ className, workspaceId }: Props) => {
               onClick={() =>
                 setOpen(
                   <CustomModal title="Settings">
-                    <div>hlo</div>
+                    <SettingsForm />
                   </CustomModal>
                 )
               }

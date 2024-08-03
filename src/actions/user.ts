@@ -1,7 +1,7 @@
 "use server";
 import db from "@/lib/supabase/db";
 import { createClient } from "@/lib/supabase/supabase-server";
-import { SUBSCRIPTIONS } from "@/types/supabase";
+import { SUBSCRIPTIONS,USER } from "@/types/supabase";
 export const getUser = async () => {
   try {
     const supabase = await createClient();
@@ -47,3 +47,4 @@ export const getUserByEmail = async (email: string) => {
     return { data: null, error: `Error ${error}` };
   }
 };
+

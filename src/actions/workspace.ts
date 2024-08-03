@@ -12,7 +12,7 @@ export const createWorkspace = async (workspace: WORKSPACE) => {
   } catch (error) {
     console.log(error);
     return { data: null, error: `Error ${error}` };
-}
+  }
 };
 
 export const getPrivateWorkspaces = async (userId: string) => {
@@ -86,4 +86,30 @@ export const getSharedWorkspaces = async (userId: string) => {
     .innerJoin(collaborators, eq(workspaces.id, collaborators.workspaceId))
     .where(eq(workspaces.workspaceOwner, userId))) as [WORKSPACE];
   return res;
+};
+
+export const updateWorkspace = async (data: Partial<WORKSPACE>) => {
+  if (!data.id) return;
+  try {
+    await db.update(workspaces).set(data).where(eq(workspaces.id, data.id));
+    return { data: null, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: null, error };
+  }
+};
+
+export const deleteWorkspace = async (workspaceId: string) => {
+  if (!workspaceId) {
+    return;
+  }
+  try {
+    const res = await db
+      .delete(workspaces)
+      .where(eq(workspaces.id, workspaceId));
+    return res;
+  } catch (error) {
+    console.log(error);
+    return error;
+  }
 };

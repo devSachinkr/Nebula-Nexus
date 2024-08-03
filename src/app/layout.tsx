@@ -23,7 +23,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  console.log(db);
   return (
     <html lang="en">
       <body className={twMerge("bg-background", inter.className)}>

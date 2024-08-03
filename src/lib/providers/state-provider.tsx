@@ -9,10 +9,13 @@ import React, {
   useReducer,
 } from "react";
 
-import { FILES, FOLDER, WORKSPACE } from "@/types/supabase";
-import { usePathname } from "next/navigation";
+import { FOLDER, WORKSPACE } from "@/types/supabase";
 
-export type appFoldersType = FOLDER & { files: File[] | [] };
+import { usePathname } from "next/navigation";
+import { SUPABASE_FILE, SUPABASE_FOLDER } from "@/types/supabase-type";
+import { getFiles } from "@/actions/file";
+
+export type appFoldersType = FOLDER & { files: SUPABASE_FILE[] | [] };
 export type appWorkspacesType = WORKSPACE & {
   folders: appFoldersType[] | [];
 };
@@ -52,7 +55,32 @@ type Action =
       type: "UPDATE_FOLDER";
       payload: {
         workspaceId: string;
-        folder:Partial<appFoldersType>;
+        folder: Partial<appFoldersType>;
+        folderId: string;
+      };
+    }
+  | {
+      type: "ADD_FILE";
+      payload: {
+        workspaceId: string;
+        folderId: string;
+        file: SUPABASE_FILE;
+      };
+    }
+  | {
+      type: "UPDATE_FILE";
+      payload: {
+        workspaceId: string;
+        folderId: string;
+        file: Partial<SUPABASE_FILE>;
+        fileId: string;
+      };
+    }
+  | {
+      type: "SET_FILES";
+      payload: {
+        workspaceId: string;
+        files: SUPABASE_FILE[];
         folderId: string;
       };
     };
@@ -150,6 +178,78 @@ const appReducer = (
           return workspace;
         }),
       };
+    case "ADD_FILE":
+      return {
+        ...state,
+        workspaces: state.workspaces.map((workspace) => {
+          if (workspace.id === action.payload.workspaceId) {
+            return {
+              ...workspace,
+              folders: workspace.folders.map((folder) => {
+                if (folder.id === action.payload.folderId) {
+                  return {
+                    ...folder,
+                    files: [...folder.files, action.payload.file].sort(
+                      (a, b) =>
+                        new Date(a.created_at).getTime() -
+                        new Date(b.created_at).getTime()
+                    ),
+                  };
+                }
+                return folder;
+              }),
+            };
+          }
+          return workspace;
+        }),
+      };
+    case "UPDATE_FILE":
+      return {
+        ...state,
+        workspaces: state.workspaces.map((workspace) => {
+          if (workspace.id === action.payload.workspaceId) {
+            return {
+              ...workspace,
+              folders: workspace.folders.map((folder) => {
+                if (folder.id === action.payload.folderId) {
+                  return {
+                    ...folder,
+                    files: folder.files.map((file) => {
+                      if (file.id === action.payload.fileId) {
+                        return { ...file, ...action.payload.file };
+                      }
+                      return file;
+                    }),
+                  };
+                }
+                return folder;
+              }),
+            };
+          }
+          return workspace;
+        }),
+      };
+    case "SET_FILES":
+      return {
+        ...state,
+        workspaces: state.workspaces.map((workspace) => {
+          if (workspace.id === action.payload.workspaceId) {
+            return {
+              ...workspace,
+              folders: workspace.folders.map((folder) => {
+                if (folder.id === action.payload.folderId) {
+                  return {
+                    ...folder,
+                    files: action.payload.files,
+                  };
+                }
+                return folder;
+              }),
+            };
+          }
+          return workspace;
+        }),
+      };
     default:
       return initialState;
   }
@@ -198,26 +298,27 @@ const AppStateProvider: React.FC<AppStateProviderProps> = ({ children }) => {
       }
   }, [pathname]);
 
-  //   useEffect(() => {
-  //     if (!folderId || !workspaceId) return;
-  //     const fetchFiles = async () => {
-  //       const { error: filesError, data } = await getFiles(folderId);
-  //       if (filesError) {
-  //         console.log(filesError);
-  //       }
-  //       if (!data) return;
-  //       dispatch({
-  //         type: 'SET_FILES',
-  //         payload: { workspaceId, files: data, folderId },
-  //       });
-  //     };
-  //     fetchFiles();
-  //   }, [folderId, workspaceId]);
+  useEffect(() => {
+    if (!folderId || !workspaceId) return;
+    const fetchFiles = async () => {
+      const { error: filesError, data } = await getFiles(folderId);
+      if (filesError) {
+        console.log(filesError);
+      }
+      console.log(data);
+      if (!data) return;
+
+      dispatch({
+        type: "SET_FILES",
+        payload: { workspaceId, files: data, folderId },
+      });
+    };
+    fetchFiles();
+  }, [folderId, workspaceId]);
 
   useEffect(() => {
     console.log("App State Changed", state);
   }, [state]);
-
   return (
     <AppStateContext.Provider
       value={{ state, dispatch, workspaceId, folderId, fileId }}

@@ -20,7 +20,7 @@ const Dashboard = async () => {
         <DashboardSetup
           user={user}
           subscription={subscription as SUBSCRIPTIONS | null}
-        ></DashboardSetup>
+        />
       </div>
     );
   }
