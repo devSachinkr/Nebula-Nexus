@@ -22,6 +22,7 @@ export const useSettings = () => {
   const [workspaceData, setWorkspaceData] = useState<WORKSPACE>();
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
   const [loading, setLoading] = useState<boolean>(false);
+  const [workspaceLogo, setWorkspaceLogo] = useState<string>("");
   const changeWorkspaceName = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!workspaceId) return;
     dispatch({
@@ -66,7 +67,7 @@ export const useSettings = () => {
       setLoading(false);
       return;
     }
-    console.log(data.fullPath)
+    console.log(data.fullPath);
     dispatch({
       type: "UPDATE_WORKSPACE",
       payload: {
@@ -134,7 +135,17 @@ export const useSettings = () => {
   };
   useEffect(() => {
     getWorkspaceData();
-  }, [workspaceId,state]);
+  }, [workspaceId, state]);
+  useEffect(() => {
+    if (workspaceData?.logo) {
+      const supabase = createClient();
+      const path = supabase.storage
+        .from("nebula-workspace")
+        .getPublicUrl(workspaceData.logo)?.data?.publicUrl;
+
+      setWorkspaceLogo(path);
+    }
+  }, [workspaceData]);
   return {
     permission,
     setPermission,
@@ -152,5 +163,6 @@ export const useSettings = () => {
     addCollaborator,
     handleSubmit,
     removeCollaborator,
+    workspaceLogo
   };
 };

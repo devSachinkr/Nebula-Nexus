@@ -1,30 +1,30 @@
-import { getFolderDetails, getFolders } from "@/actions/folder";
-import { getWorkspace } from "@/actions/workspace";
+import { getFileDetails } from "@/actions/file";
+
 import QuillEditor from "@/components/editor/quill-editor";
 import { QuillProvider } from "@/lib/providers/quill-editor-provider";
-import { SUPABASE_FOLDER, SUPABASE_WORKSPACE } from "@/types/supabase-type";
 import { redirect } from "next/navigation";
-import React from "react";
 
 type Props = {
   params: {
+    fileId: string;
     workspaceId: string;
-    folderId: string;
   };
 };
 
-const page = async ({ params: { workspaceId, folderId } }: Props) => {
-  const { data, error } = await getFolderDetails(folderId);
+const page = async ({ params: { fileId, workspaceId } }: Props) => {
+  const fileID = fileId.split("folder")[1];
+
+  const { data, error } = await getFileDetails(fileID);
   if (error) {
     redirect("/dashboard");
   }
- 
+
   return (
     <QuillProvider
-      type="folder"
+      type="file"
       quillDetails={data}
       quillId={workspaceId}
-      fileId={folderId}
+      fileId={fileID}
     >
       <div className="relative">
         <QuillEditor

@@ -42,7 +42,6 @@ export const SupabaseUserProvider = ({
       setSubscription(undefined);
     }
   };
-  console.log(user);
   useEffect(() => {
     fetchUser();
   }, []);

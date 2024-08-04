@@ -4,7 +4,8 @@ import db from "@/lib/supabase/db";
 import { WORKSPACE } from "@/types/supabase";
 import { and, eq, notExists } from "drizzle-orm";
 import { collaborators, users, workspaces } from "../../migrations/schema";
-
+import { SUPABASE_WORKSPACE } from "@/types/supabase-type";
+import { createClient } from "@/lib/supabase/supabase-server";
 export const createWorkspace = async (workspace: WORKSPACE) => {
   try {
     const res = await db.insert(workspaces).values(workspace);
@@ -111,5 +112,25 @@ export const deleteWorkspace = async (workspaceId: string) => {
   } catch (error) {
     console.log(error);
     return error;
+  }
+};
+
+export const getWorkspace = async (workspaceId: string) => {
+  if (!workspaceId) throw new Error("Workspace ID must pe provided");
+  const supabase = await createClient();
+  try {
+    const { data, error } = await supabase
+      .from("workspaces")
+      .select("*")
+      .eq("id", workspaceId)
+      .single();
+    if (error) {
+      console.log(error);
+      return { data: null, error: error };
+    }
+    return { data, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: null, error };
   }
 };

@@ -53,7 +53,7 @@ export const useSidebar = ({
     setFoldersData(data!);
   };
 
-  const fetchWorkspacesData = async () => {
+  const fetchWorkspacesData = async () => {                                       
     setLoading(true);
     if (!user) return;
 
@@ -111,7 +111,6 @@ export const useSidebarDropdown = ({
   );
   const [loading, setLoading] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
-
   useEffect(() => {
     if (!state.workspaces.length) {
       dispatch({
@@ -131,7 +130,7 @@ export const useSidebarDropdown = ({
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [collaboratingWorkspaces, privateWorkspaces, sharedWorkspaces]);
+  }, [collaboratingWorkspaces, privateWorkspaces, sharedWorkspaces, state]);
   useEffect(() => {
     const updatedWorkspace = state.workspaces.find(
       (w) => w.id === defaultValues?.id

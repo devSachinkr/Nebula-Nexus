@@ -20,6 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { ScrollArea } from "../ui/scroll-area";
 import Loader from "../global/loader";
 import { Alert, AlertDescription } from "../ui/alert";
+import Image from "next/image";
 
 type Props = {};
 
@@ -36,6 +37,7 @@ const SettingsForm = (props: Props) => {
     addCollaborator,
     removeCollaborator,
     handleSubmit,
+    workspaceLogo,
   } = useSettings();
   return (
     <div className="flex gap-4 flex-col">
@@ -71,6 +73,21 @@ const SettingsForm = (props: Props) => {
           onChange={changeWorkspaceLogo}
           disabled={loading}
         />
+        {workspaceLogo &&
+          workspaceData &&
+          (loading ? (
+            <Loader />
+          ) : (
+            <div className="flex w-full justify-center items-center">
+              <Image
+                src={workspaceLogo}
+                className="object-cover rounded-md"
+                width={200}
+                height={200}
+                alt={workspaceData.title}
+              />
+            </div>
+          ))}
         {/* {subscription?.status !== 'active' && (
           <small className="text-muted-foreground">
             To customize your workspace, you need to be on a Pro Plan

@@ -94,7 +94,12 @@ export const DropDownProvider: React.FC<DropdownProvider> = ({
       router.push(`/dashboard/${workspaceId}/${accordionId}`);
     }
     if (listType === "file") {
-      router.push(`/dashboard/${workspaceId}/${accordionId}`);
+      console.log(accordionId)
+      router.push(
+        `/dashboard/${workspaceId}/${folderId}/${
+          accordionId.split("folder")[1]
+        }`
+      );
     }
   };
   // Emoji handler
@@ -167,9 +172,7 @@ export const DropDownProvider: React.FC<DropdownProvider> = ({
   };
   // handle blur
   const handleBlur = async () => {
-    if (listType === "folder") {
-      if (!editing) return;
-    }
+    if (!editing) return;
     setEditing(false);
     const fId = folderId.split("folder");
 
