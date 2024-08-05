@@ -337,6 +337,11 @@ const AppStateProvider: React.FC<AppStateProviderProps> = ({ children }) => {
 
   const folderId = useMemo(() => {
     const urlSegments = pathname?.split("/").filter(Boolean);
+    if (pathname.split("folder").length === 2) {
+      return String(String(pathname.split("folder")).split("/")[3]).split(
+        ","
+      )[0];
+    }
     if (urlSegments)
       if (urlSegments?.length > 2) {
         return urlSegments[2];

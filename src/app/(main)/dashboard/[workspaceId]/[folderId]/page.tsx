@@ -18,7 +18,7 @@ const page = async ({ params: { workspaceId, folderId } }: Props) => {
   if (error) {
     redirect("/dashboard");
   }
- 
+
   return (
     <QuillProvider
       type="folder"
@@ -27,11 +27,7 @@ const page = async ({ params: { workspaceId, folderId } }: Props) => {
       fileId={folderId}
     >
       <div className="relative">
-        <QuillEditor
-          type="workspace"
-          quillId={workspaceId}
-          quillDetails={data}
-        />
+        <QuillEditor type="folder" quillId={workspaceId} quillDetails={data} />
       </div>
     </QuillProvider>
   );

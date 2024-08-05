@@ -4,7 +4,6 @@ import { SUPABASE_FILE } from "@/types/supabase-type";
 import { createClient } from "@/lib/supabase/supabase-server";
 export const upsertFile = async (data: Partial<SUPABASE_FILE>) => {
   try {
-    console.log(data);
     const supabase = await createClient();
     const { data: updatedData, error } = await supabase.from("files").upsert({
       banner_url: data.banner_url || "",

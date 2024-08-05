@@ -12,9 +12,8 @@ type Props = {
 };
 
 const page = async ({ params: { fileId, workspaceId } }: Props) => {
-  const fileID = fileId.split("folder")[1];
-
-  const { data, error } = await getFileDetails(fileID);
+  console.log(fileId)
+  const { data, error } = await getFileDetails(fileId);
   if (error) {
     redirect("/dashboard");
   }
@@ -24,11 +23,11 @@ const page = async ({ params: { fileId, workspaceId } }: Props) => {
       type="file"
       quillDetails={data}
       quillId={workspaceId}
-      fileId={fileID}
+      fileId={fileId}
     >
       <div className="relative">
         <QuillEditor
-          type="workspace"
+          type="file"
           quillId={workspaceId}
           quillDetails={data}
         />

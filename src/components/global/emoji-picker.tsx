@@ -16,7 +16,7 @@ const Emoji = ({ children, getValue }: Props) => {
     if (getValue) getValue(selectedEmoji.emoji);
   };
   return (
-    <div className="flex items-center">
+    <div className="flex items-center z-[11111]">
       <Popover>
         <PopoverTrigger  className="cursor-pointer">{children}</PopoverTrigger>
         <PopoverContent  side="top" className="p-0 border-none">

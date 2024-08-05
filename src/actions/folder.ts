@@ -43,7 +43,10 @@ export const upsertFolder = async (folder: Partial<FOLDER>) => {
       },
     ]);
 
-    if (error) return { data: null, error };
+    if (error) {
+      console.log(error);
+      return { data: null, error };
+    }
     return { data, error: null };
   } catch (error) {
     console.log(error);
@@ -77,7 +80,7 @@ export const getFolderDetails = async (folderId: string) => {
       .eq("id", folderId)
       .single();
     if (error) return { data: null, error: error };
-    return { data: data , error: null };
+    return { data: data, error: null };
   } catch (error) {
     console.log(error);
     return { data: null, error: `Error ${error}` };

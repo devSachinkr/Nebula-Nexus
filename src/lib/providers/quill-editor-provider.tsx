@@ -17,14 +17,27 @@ import {
 } from "@/types/supabase-type";
 import { deleteFiles, upsertFile } from "@/actions/file";
 import ToastNotify from "@/components/global/ToastNotify";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { deleteFolder, upsertFolder } from "@/actions/folder";
+import { createClient } from "../supabase/supabase-client";
+import { updateWorkspace } from "@/actions/workspace";
 
 interface QuillContext {
   wrapperRef: (wrapper: any) => void;
   details: SUPABASE_FILE | SUPABASE_FOLDER | SUPABASE_WORKSPACE | null;
   restoreTrash: () => void;
   deleteFile: () => void;
+  breadCrumbs: string | undefined;
+  collaborators:
+    | {
+        id: string;
+        email: string;
+        avatar_url: string;
+      }[]
+    | undefined;
+  loading: boolean;
+  bannerUrl: string | undefined;
+  iconChange: (emoji: string) => void;
 }
 
 interface QuillProvider {
@@ -39,6 +52,11 @@ const initialValue: QuillContext = {
   restoreTrash: () => {},
   deleteFile: () => {},
   details: null,
+  breadCrumbs: undefined,
+  collaborators: undefined,
+  loading: false,
+  bannerUrl: undefined,
+  iconChange: (emoji: string) => {},
 };
 
 const QuillContext = createContext<QuillContext>(initialValue);
@@ -52,7 +70,18 @@ export const QuillProvider: React.FC<QuillProvider> = ({
 }) => {
   const [quill, setQuill] = useState<any>(null);
   const { dispatch, folderId, state, workspaceId } = useAppState();
+  const [bannerImage, setBannerImage] = useState<string>("");
+  const [collaborators, setCollaborators] = useState<
+    | {
+        id: string;
+        email: string;
+        avatar_url: string;
+      }[]
+    | undefined
+  >(undefined);
+  const [loading, setLoading] = useState<false>(false);
   const router = useRouter();
+  const pathName = usePathname();
   const restoreTrash = async () => {
     if (type === "file") {
       if (!folderId || !workspaceId || !fileId) return;
@@ -72,6 +101,9 @@ export const QuillProvider: React.FC<QuillProvider> = ({
           .find((w) => w.id === workspaceId)
           ?.folders.find((f) => f.id === folderId)
           ?.files.find((file) => file.id === fileId),
+        workspace_id: workspaceId,
+        folder_id: folderId,
+        id: fileId,
         in_trash: "",
       });
 
@@ -142,7 +174,7 @@ export const QuillProvider: React.FC<QuillProvider> = ({
         title: "Success",
         msg: `File has been deleted`,
       });
-      router.refresh();
+      router.replace("/dashboard");
     } else if (type === "folder") {
       if (!folderId || !workspaceId || !fileId) return;
       dispatch({
@@ -164,7 +196,7 @@ export const QuillProvider: React.FC<QuillProvider> = ({
         title: "Success",
         msg: `Folder has been deleted`,
       });
-      router.refresh();
+      router.replace("/dashboard");
     }
   };
 
@@ -219,11 +251,166 @@ export const QuillProvider: React.FC<QuillProvider> = ({
     }
   }, []);
 
+  const breadCrumbs = useMemo(() => {
+    if (!pathName || !state.workspaces || !workspaceId) return;
+
+    const segments = pathName
+      .split("/")
+      .filter((val) => val !== "dashboard" && val);
+    const workspaceDetails = state.workspaces.find((w) => w.id === workspaceId);
+    const workspaceBreadCrumb = workspaceDetails
+      ? `${workspaceDetails.iconId} ${workspaceDetails.title}`
+      : "";
+    if (segments.length === 1) {
+      return workspaceBreadCrumb;
+    }
+
+    const folderSegment = segments[1];
+    const folderDetails = workspaceDetails?.folders.find(
+      (f) => f.id === folderSegment
+    );
+    const folderBreadCrumb = folderDetails
+      ? `/ ${folderDetails.iconId} ${folderDetails.title}`
+      : "";
+    if (segments.length === 2) {
+      return `${workspaceBreadCrumb} ${folderBreadCrumb}`;
+    }
+    const folder = state.workspaces
+      .find((w) => w.id === workspaceId)
+      ?.folders.find((folder) => folder.id === folderId);
+
+    const folderBread = folder ? `/ ${folder.iconId} ${folder.title}` : "";
+    const fileSegment = segments[2];
+    const fileDetails = state.workspaces
+      .find((w) => w.id === workspaceId)
+      ?.folders.find((folder) => folder.id === folderId)
+      ?.files.find((file) => file.id === fileSegment);
+    const fileBreadCrumb = fileDetails
+      ? ` / ${fileDetails.icon_id} ${fileDetails.title}`
+      : "";
+    return `${workspaceBreadCrumb} ${folderBread} ${fileBreadCrumb}`;
+  }, [state, pathName, workspaceId]);
+
+  const bannerUrl: string | undefined = useMemo(() => {
+    if (!quillDetails.banner_url) return "";
+    const supabase = createClient();
+    try {
+      const { data } = supabase.storage
+        .from("banner-images")
+        .getPublicUrl(quillDetails.banner_url);
+      if (data) {
+        return data.publicUrl;
+      }
+      return "";
+    } catch (error) {
+      console.log(error);
+      return;
+    }
+  }, [quillDetails, state]);
+
+  const iconChange = async (emoji: string) => {
+    if (!workspaceId || !folderId) return;
+    if (type === "workspace") {
+      dispatch({
+        type: "UPDATE_WORKSPACE",
+        payload: {
+          workspaceId,
+          workspace: {
+            iconId: emoji,
+          },
+        },
+      });
+      const res = await updateWorkspace({
+        iconId: emoji,
+        id: workspaceId,
+      });
+      if (res?.error) {
+        ToastNotify({
+          title: "Oops!",
+          msg: `Failed to update workspace icon. Error`,
+        });
+        return;
+      }
+      ToastNotify({
+        title: "Success",
+        msg: `Workspace icon has been updated to ${emoji}`,
+      });
+    } else if (type === "file") {
+      if (!fileId) return;
+      dispatch({
+        type: "UPDATE_FILE",
+        payload: {
+          workspaceId,
+          folderId,
+          fileId,
+          file: {
+            icon_id: emoji,
+          },
+        },
+      });
+      const { error } = await upsertFile({
+        icon_id: emoji,
+        ...state.workspaces
+          .find((w) => w.id === workspaceId)
+          ?.folders.find((folder) => folder.id === folderId)
+          ?.files.find((file) => file.id === fileId),
+
+        workspace_id: workspaceId,
+        folder_id: folderId,
+        id: fileId,
+      });
+      if (error) {
+        console.log(error);
+        ToastNotify({
+          title: "Oops!",
+          msg: "Failed to update file icon Error",
+        });
+        return;
+      }
+      ToastNotify({
+        title: "Success",
+        msg: `File icon has been changed to ${emoji}`,
+      });
+    } else if (type === "folder") {
+      dispatch({
+        type: "UPDATE_FOLDER",
+        payload: {
+          workspaceId,
+          folderId,
+          folder: {
+            iconId: emoji,
+          },
+        },
+      });
+      const res = await upsertFolder({
+        ...state.workspaces
+          .find((w) => w.id === workspaceId)
+          ?.folders.find((f) => f.id === folderId),
+        iconId: emoji,
+      });
+      if (res?.error) {
+        ToastNotify({
+          title: "Oops!",
+          msg: `Failed to update folder icon. Error`,
+        });
+        return;
+      }
+      ToastNotify({
+        title: "Success",
+        msg: `Folder icon has been updated to ${emoji}`,
+      });
+    }
+  };
   const value: QuillContext = {
     wrapperRef,
     details,
     restoreTrash,
     deleteFile,
+    breadCrumbs,
+    collaborators,
+    loading,
+    bannerUrl,
+    iconChange,
   };
   return (
     <QuillContext.Provider value={value}>{children}</QuillContext.Provider>
